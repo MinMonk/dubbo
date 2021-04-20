@@ -6,6 +6,7 @@
 package com.monk.dubbo;
 
 import com.monk.dubbo.service.CarInterface;
+import org.apache.dubbo.common.extension.ExtensionLoader;
 
 /**
  * 描述：测试类 <br/>
@@ -17,6 +18,8 @@ import com.monk.dubbo.service.CarInterface;
 public class TestMain {
 
     public static void main(String[] args) {
-        ExtensionLoader<CarInterface> interface = ExtensionL
+        ExtensionLoader<CarInterface> interfaceName = ExtensionLoader.getExtensionLoader(CarInterface.class);
+        CarInterface car = interfaceName.getExtension("red");
+        car.getColor();
     }
 }
