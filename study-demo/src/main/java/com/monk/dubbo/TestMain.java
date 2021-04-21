@@ -19,7 +19,7 @@ public class TestMain {
 
     public static void main(String[] args) {
         ExtensionLoader<CarInterface> interfaceName = ExtensionLoader.getExtensionLoader(CarInterface.class);
-        CarInterface car = interfaceName.getExtension("red");
+        CarInterface car = interfaceName.getExtension("black");
         car.getColor();
     }
 }

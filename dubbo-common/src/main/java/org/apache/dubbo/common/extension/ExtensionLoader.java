@@ -118,7 +118,10 @@ public class ExtensionLoader<T> {
 
     /**
      * Load all {@link Prioritized prioritized} {@link LoadingStrategy Loading Strategies} via {@link ServiceLoader}
-     *
+     * 加载SPI的配置文件，主要有下面三个文件（具体在哪里写死的加载下面三个文件，还没有看到，这三个值是在debug时调试出来的记录一下）
+     * 1.  META-INF/dubbo/internal/
+     * 2. META-INF/dubbo/
+     * 3. META-INF/services/
      * @return non-null
      * @since 2.7.7
      */
@@ -413,6 +416,9 @@ public class ExtensionLoader<T> {
         return getExtension(name, true);
     }
 
+    /**
+     * 可以理解为spring的getBean()方法，先从缓存中拿，拿到就直接返回，拿不到就去创建
+     */
     public T getExtension(String name, boolean wrap) {
         if (StringUtils.isEmpty(name)) {
             throw new IllegalArgumentException("Extension name == null");
@@ -426,6 +432,7 @@ public class ExtensionLoader<T> {
             synchronized (holder) {
                 instance = holder.get();
                 if (instance == null) {
+                    // 创建bean
                     instance = createExtension(name, wrap);
                     holder.set(instance);
                 }
@@ -634,9 +641,11 @@ public class ExtensionLoader<T> {
                 EXTENSION_INSTANCES.putIfAbsent(clazz, clazz.getDeclaredConstructor().newInstance());
                 instance = (T) EXTENSION_INSTANCES.get(clazz);
             }
+
+            // 注入
             injectExtension(instance);
 
-
+            // AOP，默认warp为true，默认会添加包装类（AOP）
             if (wrap) {
 
                 List<Class<?>> wrapperClassesList = new ArrayList<>();
@@ -677,20 +686,28 @@ public class ExtensionLoader<T> {
 
         try {
             for (Method method : instance.getClass().getMethods()) {
+                // set开头  &&  入参个数==1  && public方法
                 if (!isSetter(method)) {
                     continue;
                 }
                 /**
                  * Check {@link DisableInject} to see if we need auto injection for this property
                  */
+                // 去掉加了@DisableInject注解的属性方法
                 if (method.getAnnotation(DisableInject.class) != null) {
                     continue;
                 }
+                // 判断入参是不是原始类型(这里取第一个参数是因为第一个if就判断了，入参只允许为1个)
+                // 如果是原始类型的，不会进行注入
                 Class<?> pt = method.getParameterTypes()[0];
                 if (ReflectUtils.isPrimitives(pt)) {
                     continue;
                 }
 
+                /**
+                 * 通过上面一系列的判断和过滤，到这里来的就是符合条件的set方法了，
+                 * method.invoke实际上就是通过反射来执行set方法，对属性进行赋值完成注入
+                 */
                 try {
                     String property = getSetterProperty(method);
                     Object object = objectFactory.getExtension(pt, property);
@@ -717,6 +734,7 @@ public class ExtensionLoader<T> {
     }
 
     /**
+     * 取set方法中set后的值作为属性名称
      * get properties name for setter, for instance: setVersion, return "version"
      * <p>
      * return "", if setter name with length less than 3
@@ -772,6 +790,7 @@ public class ExtensionLoader<T> {
 
         Map<String, Class<?>> extensionClasses = new HashMap<>();
 
+        // 循环SPI配置文件，从配置文件中加载配置的实现类
         for (LoadingStrategy strategy : strategies) {
             loadDirectory(extensionClasses, strategy.directory(), type.getName(), strategy.preferExtensionClassLoader(), strategy.overridden(), strategy.excludedPackages());
             loadDirectory(extensionClasses, strategy.directory(), type.getName().replace("org.apache", "com.alibaba"), strategy.preferExtensionClassLoader(), strategy.overridden(), strategy.excludedPackages());

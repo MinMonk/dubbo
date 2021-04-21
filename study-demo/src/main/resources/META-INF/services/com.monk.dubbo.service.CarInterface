@@ -1,0 +1,4 @@
+red=com.monk.dubbo.service.impl.RedCar
+black=com.monk.dubbo.service.impl.BlackCar
+com.monk.dubbo.service.wrapper.BrandCarWrapper
+com.monk.dubbo.service.wrapper.RunCarWrapper
