@@ -166,6 +166,10 @@ public abstract class ServiceConfigBase<T> extends AbstractServiceConfig {
         return (delay == null && provider != null) ? provider.getDelay() : delay;
     }
 
+    /**
+     * 检查接口配置的实现类是否为空,可以理解为检查service配置中的ref属性是否为空
+     * <dubbo:service ref="***"></dubbo:service>
+     */
     public void checkRef() {
         // reference should not be null, and is the implementation of the given interface
         if (ref == null) {
