@@ -198,6 +198,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             return;
         }
 
+        // 判断是否需要延迟导出
         if (shouldDelay()) {
             DELAY_EXPORT_EXECUTOR.schedule(this::doExport, getDelay(), TimeUnit.MILLISECONDS);
         } else {
@@ -217,6 +218,9 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         dispatch(new ServiceConfigExportedEvent(this));
     }
 
+    /**
+     * 检查以及重写配置
+     */
     private void checkAndUpdateSubConfigs() {
         // Use default configs defined explicitly with global scope
         completeCompoundConfigs();
@@ -249,6 +253,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             } catch (ClassNotFoundException e) {
                 throw new IllegalStateException(e.getMessage(), e);
             }
+            // 检查是不是接口,已经配置的方法是否合法
             checkInterfaceAndMethods(interfaceClass, getMethods());
             checkRef();
             generic = Boolean.FALSE.toString();
@@ -305,6 +310,9 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
+    /**
+     * 服务导出
+     */
     private void doExportUrls() {
         ServiceRepository repository = ApplicationModel.getServiceRepository();
         ServiceDescriptor serviceDescriptor = repository.registerService(getInterfaceClass());
@@ -318,6 +326,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
 
         List<URL> registryURLs = ConfigValidationUtils.loadRegistries(this, true);
 
+        // 遍历配置的各种协议,配置的服务会针对每一个协议都导出一个服务
         for (ProtocolConfig protocolConfig : protocols) {
             String pathKey = URL.buildKey(getContextPath(protocolConfig)
                     .map(p -> p + "/" + path)
@@ -328,6 +337,11 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         }
     }
 
+    /**
+     * 针对不同的协议导出服务URL
+     * @param protocolConfig
+     * @param registryURLs
+     */
     private void doExportUrlsFor1Protocol(ProtocolConfig protocolConfig, List<URL> registryURLs) {
         String name = protocolConfig.getName();
         if (StringUtils.isEmpty(name)) {
@@ -459,6 +473,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
 
             // export to local if the config is not remote (export to remote only when config is remote)
             if (!SCOPE_REMOTE.equalsIgnoreCase(scope)) {
+                // 导出本地服务,injvm
                 exportLocal(url);
             }
             // export to remote if the config is not local (export to local only when config is local)
@@ -491,6 +506,13 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                         Invoker<?> invoker = PROXY_FACTORY.getInvoker(ref, (Class) interfaceClass, registryURL.addParameterAndEncoded(EXPORT_KEY, url.toFullString()));
                         DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
 
+                        /**
+                         * 根据配置的不同协议版本,调用对应的导出方法
+                         * 比方说:配置的是http协议,那么这里调用的就是HttpProtocol.export()方法
+                         * 在调用最终的HttpProtocol.export()方法之前,还有两层wrapper,会对registry的协议类型进行判断以及处理
+                         * 调用链如下(在当前工程下的resources/META-INF/dubbo/internal/org.apache.dubbo.rpc.Protocol配置文件维护的顺序)
+                         * ProtocolFilterWrapper --> ProtocolListenerWrapper  -->  HttpProtocol
+                         */
                         Exporter<?> exporter = PROTOCOL.export(wrapperInvoker);
                         exporters.add(exporter);
                     }
@@ -505,6 +527,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                     exporters.add(exporter);
                 }
 
+                // 服务导出之后,将服务的元数据信息写入到配置中心(默认zookeeper)
                 MetadataUtils.publishServiceDefinition(url);
             }
         }

@@ -518,12 +518,17 @@ public class DubboBootstrap extends GenericEventListener {
             return;
         }
 
+        /**
+         * FrameworkExt的三个均未实现任何逻辑,也许是留着自定义扩展使用的
+         */
         ApplicationModel.initFrameworkExts();
 
+        // 循环连接配置中心,将配置中心的值读取回来
         startConfigCenter();
 
         loadRemoteConfigs();
 
+        // 检查本地xml中配置的值是否填写规范
         checkGlobalConfigs();
 
         // @since 2.7.8

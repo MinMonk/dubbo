@@ -61,6 +61,12 @@ public class MetadataUtils {
         return remoteMetadataService;
     }
 
+    /**
+     * 发布服务元数据信息
+     * 1. 添加服务元数据信息到本地  缓存到serviceDefinitions中
+     * 2. 将服务元数据信息推到配置中心
+     * @param url
+     */
     public static void publishServiceDefinition(URL url) {
         // store in local
         WritableMetadataService.getDefaultExtension().publishServiceDefinition(url);

@@ -460,6 +460,9 @@ public abstract class AbstractConfig implements Serializable {
         this.prefix = prefix;
     }
 
+    /**
+     * 完成类属性的赋值
+     */
     public void refresh() {
         Environment env = ApplicationModel.getEnvironment();
         try {

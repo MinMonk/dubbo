@@ -622,6 +622,12 @@ public class ConfigValidationUtils {
         checkProperty(property, value, MAX_LENGTH, PATTERN_METHOD_NAME);
     }
 
+    /**
+     * 对参数进行校验,
+     * 默认会对参数名中包含"backup"关键字的不进行校验
+     * 可以通过配置ignoreCheckKeys来执行要忽略校验的参数
+     * @param parameters
+     */
     public static void checkParameterName(Map<String, String> parameters) {
         if (CollectionUtils.isEmptyMap(parameters)) {
             return;

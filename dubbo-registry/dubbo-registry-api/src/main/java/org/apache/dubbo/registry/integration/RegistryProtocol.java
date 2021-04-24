@@ -202,6 +202,7 @@ public class RegistryProtocol implements Protocol {
 
         providerUrl = overrideUrlWithConfig(providerUrl, overrideSubscribeListener);
         // export invoker
+        // 本地导出,启动服务容器,暴露服务
         final ExporterChangeableWrapper<T> exporter = doLocalExport(originInvoker, providerUrl);
 
         // url to registry
@@ -211,6 +212,7 @@ public class RegistryProtocol implements Protocol {
         // decide if we need to delay publish
         boolean register = providerUrl.getParameter(REGISTER_KEY, true);
         if (register) {
+            // 以临时节点的方式将服务地址添加到注册中心(zookeeper)
             registry.register(registeredProviderUrl);
         }
 
@@ -222,8 +224,10 @@ public class RegistryProtocol implements Protocol {
         exporter.setSubscribeUrl(overrideSubscribeUrl);
 
         // Deprecated! Subscribe to override rules in 2.6.x or before.
+        // 完成服务的订阅,在以zookeeper为注册中心的前提下,这里是给zookeeper配置中心的孩子节点添加监听事件
         registry.subscribe(overrideSubscribeUrl, overrideSubscribeListener);
 
+        // 这里可以作为一个扩展点,服务注册并订阅(添加监听)成功后的一个通知事件
         notifyExport(exporter);
         //Ensure that a new exporter instance is returned every time export
         return new DestroyableExporter<>(exporter);

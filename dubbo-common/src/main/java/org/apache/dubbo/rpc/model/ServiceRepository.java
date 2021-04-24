@@ -65,6 +65,8 @@ public class ServiceRepository extends LifecycleAdapter implements FrameworkExt 
     }
 
     /**
+     *
+     * 这一步只是将服务添加到缓存中
      * See {@link #registerService(Class)}
      * <p>
      * we assume:

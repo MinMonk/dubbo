@@ -290,6 +290,11 @@ public abstract class FailbackRegistry extends AbstractRegistry {
         }
     }
 
+    /**
+     * 完成服务的订阅,实际是给服务配置的子节点添加了对应的监听(针对zookeeper来说)
+     * @param url
+     * @param listener
+     */
     @Override
     public void subscribe(URL url, NotifyListener listener) {
         super.subscribe(url, listener);

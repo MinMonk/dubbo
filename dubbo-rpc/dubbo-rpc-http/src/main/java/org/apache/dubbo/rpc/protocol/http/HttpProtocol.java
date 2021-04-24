@@ -107,6 +107,7 @@ public class HttpProtocol extends AbstractProxyProtocol {
         String addr = getAddr(url);
         ProtocolServer protocolServer = serverMap.get(addr);
         if (protocolServer == null) {
+            // 启动服务器[tomcat,netty]
             RemotingServer remotingServer = httpBinder.bind(url, new InternalHandler(url.getParameter("cors", false)));
             serverMap.put(addr, new ProxyProtocolServer(remotingServer));
         }

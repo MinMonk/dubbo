@@ -92,6 +92,10 @@ public class RemoteMetadataServiceImpl {
         return metadataReport.getAppMetadata(identifier, instance.getExtendParams());
     }
 
+    /**
+     * 根据url中的参数side来区分是发布提供方信息还是消费方信息
+     * @param url
+     */
     public void publishServiceDefinition(URL url) {
         String side = url.getParameter(SIDE_KEY);
         if (PROVIDER_SIDE.equalsIgnoreCase(side)) {
@@ -103,6 +107,10 @@ public class RemoteMetadataServiceImpl {
         }
     }
 
+    /*
+     * 持久化提供方的信息到配置中心
+     * 目前发现持久化的提供方信息为 --->>  服务的元数据信息
+     */
     private void publishProvider(URL providerUrl) throws RpcException {
         //first add into the list
         // remove the individual param
@@ -117,6 +125,7 @@ public class RemoteMetadataServiceImpl {
                         providerUrl.getParameters());
                 for (Map.Entry<String, MetadataReport> entry : getMetadataReports().entrySet()) {
                     MetadataReport metadataReport = entry.getValue();
+                    // 在这一步实现的持久化数据,将数据保存到配置中心(zookeeper)
                     metadataReport.storeProviderMetadata(new MetadataIdentifier(providerUrl.getServiceInterface(),
                             providerUrl.getParameter(VERSION_KEY), providerUrl.getParameter(GROUP_KEY),
                             PROVIDER_SIDE, providerUrl.getParameter(APPLICATION_KEY)), fullServiceDefinition);
@@ -130,6 +139,11 @@ public class RemoteMetadataServiceImpl {
         }
     }
 
+    /**
+     * 持久化消费方的信息到配置中心
+     * @param consumerURL
+     * @throws RpcException
+     */
     private void publishConsumer(URL consumerURL) throws RpcException {
         final URL url = consumerURL.removeParameters(PID_KEY, TIMESTAMP_KEY, Constants.BIND_IP_KEY,
                 Constants.BIND_PORT_KEY, TIMESTAMP_KEY);
